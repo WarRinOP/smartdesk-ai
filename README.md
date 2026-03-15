@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SmartDesk — AI Customer Support System
 
-## Getting Started
+> A trainable AI customer support system. Upload your business documents — SmartDesk answers customer questions using your content, logs every conversation, and flags knowledge gaps.
 
-First, run the development server:
+**Built for the Fiverr portfolio by Abrar Tajwar Khan.**
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 🤖 **AI Chat Widget** | Floating chat bubble on any page — dark, premium UI |
+| 📄 **Document Upload** | Upload PDF or TXT files; auto-chunked and embedded |
+| 🔍 **RAG Pipeline** | Retrieves top 4 relevant chunks before answering |
+| 📊 **Admin Dashboard** | All conversations, confidence scores, session logs |
+| 🗂 **Knowledge Manager** | View, preview, and delete uploaded content |
+| 🚨 **Gap Report** | AI-clustered unanswered questions ranked by frequency |
+| ⚙️ **Bot Config** | Bot name, persona, welcome & escalation messages |
+
+---
+
+## 🏗 Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 14 (App Router) |
+| Styling | Tailwind CSS v4 — custom dark theme |
+| Database | Supabase (PostgreSQL + pgvector) |
+| AI Model | Anthropic Claude claude-sonnet-4-6 |
+| Embeddings | Voyage AI `voyage-3-lite` (512 dims) |
+| File Parsing | pdf-parse |
+| Deployment | Vercel |
+
+---
+
+## 🚀 Setup
+
+### 1. Clone & install
+
+```bash
+git clone https://github.com/abrartajwar/smartdesk-ai.git
+cd smartdesk-ai
+npm install
+```
+
+### 2. Configure environment variables
+
+```bash
+cp .env.local.example .env.local
+# Fill in your keys
+```
+
+Required keys:
+
+| Variable | Where to get it |
+|----------|----------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase dashboard → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase dashboard → Project Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard → Project Settings → API |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `VOYAGE_API_KEY` | [dash.voyageai.com](https://dash.voyageai.com) (free tier) |
+
+### 3. Set up Supabase database
+
+Run migrations in Supabase SQL editor (from `/supabase/migrations/`).
+
+### 4. Start development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+├── page.tsx                # Chat widget demo (public)
+├── admin/
+│   ├── page.tsx            # Conversation dashboard
+│   ├── knowledge/page.tsx  # Knowledge base manager
+│   ├── gaps/page.tsx       # Knowledge gap report
+│   └── config/page.tsx     # Bot configuration
+└── api/
+    ├── chat/route.ts       # RAG chat endpoint
+    ├── upload/route.ts     # Document upload
+    ├── conversations/route.ts
+    ├── gaps/route.ts
+    └── config/route.ts
 
-## Learn More
+components/
+├── chat/   # ChatWidget, MessageBubble, TypingIndicator
+├── admin/  # ConversationTable, StatsCards, GapReport, etc.
+└── ui/     # Button, Card, Badge, FileUpload
 
-To learn more about Next.js, take a look at the following resources:
+lib/
+├── supabase.ts  # Supabase clients
+├── claude.ts    # Anthropic SDK
+├── rag.ts       # Chunk, embed, retrieve
+└── pdf.ts       # PDF/TXT parsing
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎬 Demo Scenario
 
-## Deploy on Vercel
+1. Upload `restaurant-menu.pdf` via **Knowledge Manager**
+2. Customer asks *"Do you have gluten-free pasta?"* in the chat widget
+3. Bot retrieves relevant menu chunks and answers correctly
+4. **Admin Dashboard** shows the conversation logged with confidence score
+5. **Gap Report** flags *"Opening hours — asked 3 times, no answer in docs"*
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+
+MIT — free to use for portfolio and commercial projects.
