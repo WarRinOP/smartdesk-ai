@@ -1,7 +1,24 @@
-// Server-only — voyageai client runs only in API routes
+// Server-only — runs in API routes only, never in client components
 // Model: voyage-3-lite | Output dimensions: 512
-import { VoyageAIClient } from "voyageai";
+// voyageai ESM has broken directory imports; use CJS require() like pdf-parse
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { createServerSupabaseClient } from "./supabase";
+
+interface VoyageEmbedResponse {
+  data: Array<{ embedding: number[] }>;
+}
+
+interface VoyageClientType {
+  embed(opts: {
+    model: string;
+    input: string[];
+    inputType?: "query" | "document";
+  }): Promise<VoyageEmbedResponse>;
+}
+
+const { VoyageAIClient } = require("voyageai") as {
+  VoyageAIClient: new (opts: { apiKey: string }) => VoyageClientType;
+};
 
 const voyageClient = new VoyageAIClient({
   apiKey: process.env.VOYAGE_API_KEY!,
@@ -14,7 +31,7 @@ const CHUNK_OVERLAP = 50;
 // ─── Embedding ────────────────────────────────────────────
 
 /**
- * Generate a 512-dim embedding for a single text string.
+ * Generate a 512-dim embedding for a single text string (query mode).
  */
 export async function embedText(text: string): Promise<number[]> {
   const response = await voyageClient.embed({
@@ -22,11 +39,11 @@ export async function embedText(text: string): Promise<number[]> {
     input: [text],
     inputType: "query",
   });
-  return response.data![0].embedding as number[];
+  return response.data[0].embedding;
 }
 
 /**
- * Generate embeddings for multiple texts (batch).
+ * Generate embeddings for multiple texts in a batch (document mode).
  */
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   const response = await voyageClient.embed({
@@ -34,13 +51,13 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
     input: texts,
     inputType: "document",
   });
-  return response.data!.map((d) => d.embedding as number[]);
+  return response.data.map((d) => d.embedding);
 }
 
 // ─── Chunking ─────────────────────────────────────────────
 
 /**
- * Split text into overlapping chunks of ~CHUNK_SIZE characters.
+ * Split text into overlapping ~CHUNK_SIZE character segments.
  */
 export function chunkText(text: string): string[] {
   const chunks: string[] = [];
@@ -53,13 +70,14 @@ export function chunkText(text: string): string[] {
     start += CHUNK_SIZE - CHUNK_OVERLAP;
   }
 
-  return chunks.filter((c) => c.length > 20); // drop tiny fragments
+  return chunks.filter((c) => c.length > 20);
 }
 
 // ─── Storage ──────────────────────────────────────────────
 
 /**
- * Store a batch of chunks + their embeddings in knowledge_chunks.
+ * Store chunks + embeddings in the knowledge_chunks table.
+ * Supabase pgvector accepts plain JS number arrays for vector columns.
  */
 export async function storeChunks(
   chunks: string[],
@@ -70,14 +88,14 @@ export async function storeChunks(
 
   const rows = chunks.map((content, i) => ({
     content,
-    embedding: JSON.stringify(embeddings[i]),
+    embedding: embeddings[i] as unknown as string, // pgvector accepts arrays
     source_file: sourceFile,
     chunk_index: i,
   }));
 
   const { error } = await supabase.from("knowledge_chunks").insert(rows);
-
   if (error) throw new Error(`Failed to store chunks: ${error.message}`);
+
   return rows.length;
 }
 
@@ -91,8 +109,7 @@ export interface RetrievedChunk {
 }
 
 /**
- * Find the top-K most similar chunks for a given query.
- * Uses Supabase RPC function `match_chunks`.
+ * Find the top-K most similar chunks via the match_chunks Supabase RPC.
  */
 export async function retrieveChunks(
   queryEmbedding: number[],

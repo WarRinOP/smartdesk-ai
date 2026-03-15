@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // These packages use CJS and have ESM resolution issues with Turbopack.
+  // Mark them as external so Node.js handles them natively.
+  serverExternalPackages: ["voyageai", "pdf-parse"],
 };
 
 export default nextConfig;
