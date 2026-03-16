@@ -1,29 +1,38 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const sessionId = searchParams.get("session_id");
+
     const supabase = createServerSupabaseClient();
 
-    // Unique session count
-    const { data: sessionsData } = await supabase
+    // Base query for assistant messages — scoped to session if provided
+    let sessionsQuery = supabase
       .from("conversations")
       .select("session_id")
       .eq("role", "assistant");
 
-    const totalConversations = new Set(
-      (sessionsData ?? []).map((s) => s.session_id)
-    ).size;
-
-    // Confidence stats
-    const { data: confidenceData } = await supabase
+    let confidenceQuery = supabase
       .from("conversations")
       .select("confidence")
       .eq("role", "assistant")
       .not("confidence", "is", null);
 
+    if (sessionId) {
+      sessionsQuery = sessionsQuery.eq("session_id", sessionId);
+      confidenceQuery = confidenceQuery.eq("session_id", sessionId);
+    }
+
+    const { data: sessionsData } = await sessionsQuery;
+    const totalConversations = new Set(
+      (sessionsData ?? []).map((s) => s.session_id)
+    ).size;
+
+    const { data: confidenceData } = await confidenceQuery;
     const confidences = (confidenceData ?? [])
       .map((c) => c.confidence as number)
       .filter((c) => c !== null);
@@ -39,7 +48,7 @@ export async function GET() {
         ? Math.round((lowConfidenceCount / confidences.length) * 100)
         : 0;
 
-    // Chunk count
+    // Chunk count (global — not session-scoped)
     const { count: chunkCount } = await supabase
       .from("knowledge_chunks")
       .select("*", { count: "exact", head: true });

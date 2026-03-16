@@ -78,7 +78,9 @@ export default function StatsCards() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/stats")
+    const sid = typeof window !== "undefined" ? localStorage.getItem("sd_session_id") : null;
+    const params = sid ? `?session_id=${encodeURIComponent(sid)}` : "";
+    fetch(`/api/stats${params}`)
       .then((r) => r.json())
       .then((data) => setStats(data))
       .catch(() => { /* non-fatal */ })

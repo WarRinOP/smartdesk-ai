@@ -17,7 +17,6 @@ interface ChunkPreview {
 export default function KnowledgeTable({ onRefresh }: { onRefresh?: number }) {
   const [files, setFiles] = useState<KnowledgeFile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingFile, setDeletingFile] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [previewChunks, setPreviewChunks] = useState<ChunkPreview[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -33,17 +32,6 @@ export default function KnowledgeTable({ onRefresh }: { onRefresh?: number }) {
   }, []);
 
   useEffect(() => { fetchFiles(); }, [fetchFiles, onRefresh]);
-
-  const handleDelete = async (sourceFile: string) => {
-    if (!confirm(`Delete all ${files.find((f) => f.source_file === sourceFile)?.chunk_count} chunks from "${sourceFile}"?`)) return;
-    setDeletingFile(sourceFile);
-    try {
-      await fetch(`/api/chunks?source_file=${encodeURIComponent(sourceFile)}`, { method: "DELETE" });
-      setFiles((prev) => prev.filter((f) => f.source_file !== sourceFile));
-      if (previewFile === sourceFile) setPreviewFile(null);
-    } catch { /* non-fatal */ }
-    finally { setDeletingFile(null); }
-  };
 
   const handlePreview = async (sourceFile: string) => {
     if (previewFile === sourceFile) { setPreviewFile(null); return; }
@@ -142,22 +130,6 @@ export default function KnowledgeTable({ onRefresh }: { onRefresh?: number }) {
                 }}
               >
                 {previewFile === file.source_file ? "Hide" : "Preview"}
-              </button>
-              <button
-                onClick={() => handleDelete(file.source_file)}
-                disabled={deletingFile === file.source_file}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid rgba(248,81,73,0.3)",
-                  background: "rgba(248,81,73,0.08)",
-                  color: "var(--color-danger)",
-                  fontSize: "11px",
-                  cursor: deletingFile === file.source_file ? "not-allowed" : "pointer",
-                  opacity: deletingFile === file.source_file ? 0.5 : 1,
-                }}
-              >
-                {deletingFile === file.source_file ? "…" : "Delete"}
               </button>
             </div>
           </div>

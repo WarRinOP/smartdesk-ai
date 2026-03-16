@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
     const filter = searchParams.get("filter"); // "high" | "low" | null
     const sessionId = searchParams.get("session_id");
+    const mySessionId = searchParams.get("my_session_id"); // scope to current user's session
 
     const supabase = createServerSupabaseClient();
 
@@ -27,12 +28,16 @@ export async function GET(req: NextRequest) {
     }
 
     // Aggregate sessions — get distinct session_ids with metadata
-    // We'll fetch all assistant messages and group them by session
     let query = supabase
       .from("conversations")
       .select("*")
       .eq("role", "assistant")
       .order("created_at", { ascending: false });
+
+    // Scope to current user's session if provided
+    if (mySessionId) {
+      query = query.eq("session_id", mySessionId);
+    }
 
     // Confidence filters
     if (filter === "high") {

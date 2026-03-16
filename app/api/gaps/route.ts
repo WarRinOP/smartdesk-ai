@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { chat } from "@/lib/claude";
 
@@ -11,17 +11,26 @@ interface GapQuestion {
   example_messages: string[];
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const sessionId = searchParams.get("session_id");
+
     const supabase = createServerSupabaseClient();
 
     // Fetch session IDs where assistant had low confidence
-    const { data: lowConfidenceAssistant, error } = await supabase
+    let lowConfQuery = supabase
       .from("conversations")
       .select("session_id")
       .eq("role", "assistant")
       .lt("confidence", 0.5)
       .limit(200);
+
+    if (sessionId) {
+      lowConfQuery = lowConfQuery.eq("session_id", sessionId);
+    }
+
+    const { data: lowConfidenceAssistant, error } = await lowConfQuery;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

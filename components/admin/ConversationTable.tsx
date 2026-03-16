@@ -50,6 +50,8 @@ export default function ConversationTable() {
     try {
       const params = new URLSearchParams({ page: String(page) });
       if (filter !== "all") params.set("filter", filter);
+      const sid = typeof window !== "undefined" ? localStorage.getItem("sd_session_id") : null;
+      if (sid) params.set("my_session_id", sid);
       const res = await fetch(`/api/conversations?${params}`);
       const data = await res.json();
       setSessions(data.sessions ?? []);

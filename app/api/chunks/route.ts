@@ -51,6 +51,14 @@ export async function GET() {
 
 // DELETE /api/chunks?source_file=filename.txt — remove all chunks for a file
 export async function DELETE(req: NextRequest) {
+  // Block deletion in demo mode
+  if (process.env.DEMO_MODE === "true") {
+    return NextResponse.json(
+      { error: "Deletion disabled in demo mode." },
+      { status: 403 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const sourceFile = searchParams.get("source_file");

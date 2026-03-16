@@ -46,7 +46,9 @@ export default function GapReport() {
   const fetchGaps = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/gaps");
+      const sid = typeof window !== "undefined" ? localStorage.getItem("sd_session_id") : null;
+      const params = sid ? `?session_id=${encodeURIComponent(sid)}` : "";
+      const res = await fetch(`/api/gaps${params}`);
       const json = await res.json();
       setData(json);
     } catch { /* non-fatal */ }
