@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
-import { SEED_CONTENT, SEED_SOURCE } from "@/lib/seed";
+import { SEED_CONTENT, SEED_SOURCE_FILE } from "@/lib/seed";
 import { chunkText, embedBatch, storeChunks } from "@/lib/rag";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ export async function POST() {
     await supabase
       .from("knowledge_chunks")
       .delete()
-      .eq("source_file", SEED_SOURCE);
+      .eq("source_file", SEED_SOURCE_FILE);
 
     // Also clear ALL chunks (full reset for demo)
     await supabase.from("knowledge_chunks").delete().neq("id", "00000000-0000-0000-0000-000000000000");
@@ -33,15 +33,14 @@ export async function POST() {
     }
 
     // 4. Store
-    const count = await storeChunks(chunks, allEmbeddings, SEED_SOURCE);
+    const count = await storeChunks(chunks, allEmbeddings, SEED_SOURCE_FILE);
 
     return NextResponse.json({
       success: true,
-      message: `Demo data loaded — ${count} chunks from "${SEED_SOURCE}"`,
+      message: `Demo data loaded — ${count} chunks from "${SEED_SOURCE_FILE}"`,
       chunk_count: count,
     });
   } catch (error) {
-    console.error("[seed] Error:", error);
     return NextResponse.json(
       {
         error: "Failed to seed knowledge base",

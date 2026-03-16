@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ConversationTable from "@/components/admin/ConversationTable";
+import ErrorBoundary from "@/components/admin/ErrorBoundary";
 
 export const metadata: Metadata = { title: "Conversations — SmartDesk Admin" };
 
@@ -14,7 +15,11 @@ export default function ConversationsPage() {
           Browse all chat sessions. Click a row to see the full transcript.
         </p>
       </div>
-      <ConversationTable />
+      <ErrorBoundary label="Conversation table failed to load.">
+        <div className="table-scroll">
+          <ConversationTable />
+        </div>
+      </ErrorBoundary>
     </>
   );
 }

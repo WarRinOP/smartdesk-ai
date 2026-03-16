@@ -93,7 +93,7 @@ export default function StatsCards() {
           50% { opacity: 0.8; }
         }
       `}</style>
-      <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "32px" }}>
+      <div className="stats-grid">
         <StatCard
           label="Total Conversations"
           value={stats?.total_conversations ?? 0}

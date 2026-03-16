@@ -57,20 +57,7 @@ export default function HomePage() {
         }}
       />
 
-      {/* Hover fix: inject minimal CSS for feature cards */}
-      <style>{`
-        .feature-card {
-          transition: border-color 0.2s, transform 0.2s;
-        }
-        .feature-card:hover {
-          border-color: var(--color-border-hover) !important;
-          transform: translateY(-2px);
-        }
-        .gh-link:hover {
-          border-color: var(--color-border-hover) !important;
-          color: var(--color-text-primary) !important;
-        }
-      `}</style>
+      {/* Hover styles now in globals.css — no inline needed */}
 
       {/* Nav bar */}
       <nav
@@ -242,12 +229,10 @@ export default function HomePage() {
 
       {/* Feature cards */}
       <section
+        className="features-grid"
         style={{
           width: "100%",
           maxWidth: "900px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: "16px",
           position: "relative",
           zIndex: 1,
           paddingBottom: "80px",

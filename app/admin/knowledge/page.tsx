@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AdminFileUpload from "@/components/admin/AdminFileUpload";
 import KnowledgeTable from "@/components/admin/KnowledgeTable";
+import ErrorBoundary from "@/components/admin/ErrorBoundary";
 
 export default function KnowledgePage() {
   const [refreshTick, setRefreshTick] = useState(0);
@@ -18,7 +19,9 @@ export default function KnowledgePage() {
         </p>
       </div>
 
-      <AdminFileUpload onUploadSuccess={() => setRefreshTick((t) => t + 1)} />
+      <ErrorBoundary label="File upload area failed to load.">
+        <AdminFileUpload onUploadSuccess={() => setRefreshTick((t) => t + 1)} />
+      </ErrorBoundary>
 
       <div style={{ marginBottom: "14px" }}>
         <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "4px" }}>
@@ -29,7 +32,11 @@ export default function KnowledgePage() {
         </p>
       </div>
 
-      <KnowledgeTable onRefresh={refreshTick} />
+      <ErrorBoundary label="Knowledge table failed to load.">
+        <div className="table-scroll">
+          <KnowledgeTable onRefresh={refreshTick} />
+        </div>
+      </ErrorBoundary>
     </>
   );
 }

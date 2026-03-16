@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ConfigForm from "@/components/admin/ConfigForm";
+import ErrorBoundary from "@/components/admin/ErrorBoundary";
 
 export const metadata: Metadata = { title: "Configuration — SmartDesk Admin" };
 
@@ -14,7 +15,9 @@ export default function ConfigPage() {
           Customize your bot&apos;s name, persona, and response messages.
         </p>
       </div>
-      <ConfigForm />
+      <ErrorBoundary label="Config form failed to load.">
+        <ConfigForm />
+      </ErrorBoundary>
     </>
   );
 }

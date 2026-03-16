@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import StatsCards from "@/components/admin/StatsCards";
 import ConversationTable from "@/components/admin/ConversationTable";
+import ErrorBoundary from "@/components/admin/ErrorBoundary";
 
 export const metadata: Metadata = { title: "Overview — SmartDesk Admin" };
 
@@ -15,7 +16,9 @@ export default function AdminPage() {
           Live metrics and recent conversation activity
         </p>
       </div>
-      <StatsCards />
+      <ErrorBoundary label="Stats failed to load.">
+        <StatsCards />
+      </ErrorBoundary>
       <div style={{ marginBottom: "16px" }}>
         <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "4px" }}>
           Recent Conversations
@@ -24,7 +27,11 @@ export default function AdminPage() {
           Click any row to expand the full conversation thread
         </p>
       </div>
-      <ConversationTable />
+      <ErrorBoundary label="Conversation table failed to load.">
+        <div className="table-scroll">
+          <ConversationTable />
+        </div>
+      </ErrorBoundary>
     </>
   );
 }

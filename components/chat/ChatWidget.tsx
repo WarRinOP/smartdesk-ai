@@ -169,13 +169,8 @@ export default function ChatWidget() {
       {/* Chat Window */}
       {isOpen && (
         <div
-          className="animate-slide-up"
+          className="chat-window animate-slide-up"
           style={{
-            position: "fixed",
-            bottom: "84px",
-            right: "20px",
-            width: "380px",
-            height: "520px",
             background: "var(--color-bg-surface)",
             border: "1px solid var(--color-border)",
             borderRadius: "20px",
