@@ -66,7 +66,7 @@ export default function HomePage() {
           maxWidth: "700px",
           width: "100%",
           textAlign: "center",
-          padding: "60px 0 56px",
+          padding: "clamp(32px, 8vw, 60px) 0 56px",
           position: "relative",
           zIndex: 1,
         }}
