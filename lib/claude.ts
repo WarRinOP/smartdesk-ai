@@ -11,7 +11,7 @@ export interface ChatMessage {
 }
 
 /**
- * Send a chat request to Claude claude-sonnet-4-6.
+ * Send a chat request to Claude Haiku 4.5 (fast + cheap).
  * Used by the RAG pipeline in /api/chat.
  */
 export async function chat(
@@ -19,7 +19,7 @@ export async function chat(
   messages: ChatMessage[]
 ): Promise<string> {
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-haiku-4-5",
     max_tokens: 1024,
     system: systemPrompt,
     messages,
