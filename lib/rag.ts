@@ -1,57 +1,66 @@
 // Server-only — runs in API routes only, never in client components
-// Model: voyage-3-lite | Output dimensions: 512
-// voyageai ESM has broken directory imports; use CJS require() like pdf-parse
-/* eslint-disable @typescript-eslint/no-require-imports */
+// Embeddings: Jina AI jina-embeddings-v3 | 512 dimensions
+// Uses fetch (no SDK needed — Jina has a clean REST API)
 import { createServerSupabaseClient } from "./supabase";
 
-interface VoyageEmbedResponse {
-  data: Array<{ embedding: number[] }>;
-}
+const JINA_API_KEY = process.env.JINA_API_KEY!;
+const JINA_API_URL = "https://api.jina.ai/v1/embeddings";
+const EMBED_MODEL = "jina-embeddings-v3";
+const EMBED_DIMS = 512;
 
-interface VoyageClientType {
-  embed(opts: {
-    model: string;
-    input: string[];
-    inputType?: "query" | "document";
-  }): Promise<VoyageEmbedResponse>;
-}
-
-const { VoyageAIClient } = require("voyageai") as {
-  VoyageAIClient: new (opts: { apiKey: string }) => VoyageClientType;
-};
-
-const voyageClient = new VoyageAIClient({
-  apiKey: process.env.VOYAGE_API_KEY!,
-});
-
-const EMBED_MODEL = "voyage-3-lite";
 const CHUNK_SIZE = 500;
 const CHUNK_OVERLAP = 50;
 
-// ─── Embedding ────────────────────────────────────────────
+// ─── Jina Embedding Helpers ───────────────────────────────
+
+interface JinaEmbedResponse {
+  data: Array<{ embedding: number[] }>;
+}
+
+async function jinaEmbed(
+  inputs: string[],
+  task: "retrieval.query" | "retrieval.passage"
+): Promise<number[][]> {
+  const res = await fetch(JINA_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${JINA_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: EMBED_MODEL,
+      input: inputs,
+      dimensions: EMBED_DIMS,
+      task,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Jina AI error ${res.status}: ${body}`);
+  }
+
+  const json = (await res.json()) as JinaEmbedResponse;
+  return json.data.map((d) => d.embedding);
+}
+
+// ─── Public Embedding Functions ───────────────────────────
 
 /**
- * Generate a 512-dim embedding for a single text string (query mode).
+ * Generate a 512-dim embedding for a single query string.
+ * Uses task="retrieval.query" for optimal query-side embeddings.
  */
 export async function embedText(text: string): Promise<number[]> {
-  const response = await voyageClient.embed({
-    model: EMBED_MODEL,
-    input: [text],
-    inputType: "query",
-  });
-  return response.data[0].embedding;
+  const results = await jinaEmbed([text], "retrieval.query");
+  return results[0];
 }
 
 /**
- * Generate embeddings for multiple texts in a batch (document mode).
+ * Generate embeddings for multiple document chunks (batch).
+ * Uses task="retrieval.passage" for optimal document-side embeddings.
  */
 export async function embedBatch(texts: string[]): Promise<number[][]> {
-  const response = await voyageClient.embed({
-    model: EMBED_MODEL,
-    input: texts,
-    inputType: "document",
-  });
-  return response.data.map((d) => d.embedding);
+  return jinaEmbed(texts, "retrieval.passage");
 }
 
 // ─── Chunking ─────────────────────────────────────────────
@@ -76,7 +85,7 @@ export function chunkText(text: string): string[] {
 // ─── Storage ──────────────────────────────────────────────
 
 /**
- * Store chunks + embeddings in the knowledge_chunks table.
+ * Store chunks + their embeddings in the knowledge_chunks table.
  * Supabase pgvector accepts plain JS number arrays for vector columns.
  */
 export async function storeChunks(

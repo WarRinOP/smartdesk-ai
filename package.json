@@ -14,8 +14,7 @@
     "next": "16.1.6",
     "pdf-parse": "^2.4.5",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "voyageai": "^0.2.1"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
