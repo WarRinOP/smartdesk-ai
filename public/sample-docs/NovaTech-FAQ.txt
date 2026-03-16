@@ -1,0 +1,51 @@
+NovaTech Support — Frequently Asked Questions
+=============================================
+
+Q: What is NovaTech?
+A: NovaTech is a project management and team collaboration platform designed for small to mid-size businesses. It combines task boards, time tracking, document sharing, and real-time messaging into a single workspace.
+
+Q: How much does NovaTech cost?
+A: NovaTech offers three pricing tiers:
+- Starter: $12/user/month (up to 10 users, 5GB storage)
+- Professional: $29/user/month (unlimited users, 50GB storage, advanced analytics)
+- Enterprise: $59/user/month (unlimited everything, SSO, priority support, custom integrations)
+All plans include a 14-day free trial with no credit card required.
+
+Q: Can I try NovaTech before buying?
+A: Yes. Every plan includes a 14-day free trial. No credit card is needed to start. You get full access to all features during the trial period.
+
+Q: What integrations does NovaTech support?
+A: NovaTech integrates with Slack, Google Workspace, Microsoft 365, GitHub, Jira, Figma, Zapier, and over 50 other tools via our API. Custom integrations are available on the Enterprise plan.
+
+Q: How do I invite team members?
+A: Go to Settings → Team → Invite Members. Enter their email addresses and select a role (Admin, Editor, or Viewer). They will receive an email invitation and can join immediately.
+
+Q: What is the maximum file upload size?
+A: Individual files can be up to 100MB. On the Starter plan, total storage is 5GB per workspace. Professional plan includes 50GB, and Enterprise has unlimited storage.
+
+Q: Does NovaTech have a mobile app?
+A: Yes. NovaTech has native apps for iOS and Android, available on the App Store and Google Play. The mobile app supports all core features including task management, messaging, and file access.
+
+Q: How does time tracking work?
+A: Each task has a built-in timer. Click the clock icon on any task to start tracking. You can also manually log hours. Time reports can be exported as CSV or viewed in the Analytics dashboard.
+
+Q: Can I create custom workflows?
+A: Yes. On the Professional and Enterprise plans, you can create custom task statuses, automated workflows, and trigger-based actions. For example, automatically assign a reviewer when a task moves to "In Review."
+
+Q: Is my data secure?
+A: NovaTech uses AES-256 encryption at rest and TLS 1.3 for data in transit. We are SOC 2 Type II certified and GDPR compliant. Enterprise customers can also enable data residency controls to keep data in specific regions.
+
+Q: How do I contact support?
+A: Starter and Professional users can reach support via email at support@novatech.io (response within 24 hours). Enterprise users get a dedicated Slack channel with 2-hour response SLA and a named account manager.
+
+Q: Can I export my data?
+A: Yes. Go to Settings → Data → Export. You can export all projects, tasks, messages, and files as a ZIP archive. Data exports are available on all plans.
+
+Q: What happens when my trial ends?
+A: Your workspace data is preserved for 30 days after the trial ends. You can upgrade to a paid plan anytime during that period to continue without losing anything. After 30 days, inactive trial workspaces are deleted.
+
+Q: Does NovaTech support single sign-on (SSO)?
+A: SSO via SAML 2.0 is available on the Enterprise plan. We support Okta, Azure AD, Google Workspace, and OneLogin. Contact our sales team to configure SSO for your organization.
+
+Q: Can I use NovaTech for client projects?
+A: Yes. You can create guest accounts with limited access. Guests can view and comment on specific projects without seeing your internal workspace. Guest seats are free on all plans.

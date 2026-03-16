@@ -89,6 +89,29 @@ export default function HomePage() {
         <div style={{ display: "flex", gap: "8px" }}>
           <SeedButton />
           <a
+            href="/admin"
+            className="gh-link"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 14px",
+              borderRadius: "8px",
+              border: "1px solid var(--color-border)",
+              background: "transparent",
+              color: "var(--color-text-secondary)",
+              fontSize: "13px",
+              textDecoration: "none",
+              transition: "border-color 0.15s, color 0.15s",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+            </svg>
+            Admin
+          </a>
+          <a
             href="https://github.com/WarRinOP/smartdesk-ai"
             target="_blank"
             rel="noopener noreferrer"
@@ -224,6 +247,90 @@ export default function HomePage() {
           >
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
+        </div>
+      </section>
+
+      {/* Training documents — proves it's RAG */}
+      <section
+        className="animate-fade-in-up"
+        style={{
+          width: "100%",
+          maxWidth: "900px",
+          position: "relative",
+          zIndex: 1,
+          marginBottom: "40px",
+          animationDelay: "0.2s",
+          animationFillMode: "both",
+        }}
+      >
+        <div
+          style={{
+            background: "var(--color-bg-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "16px",
+            padding: "24px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+            <span style={{ fontSize: "18px" }}>📚</span>
+            <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-text-primary)", margin: 0 }}>
+              This demo bot is trained on:
+            </h2>
+          </div>
+          <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: "0 0 16px" }}>
+            Read the documents below, then ask the chat anything from them to see RAG in action.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {[
+              { name: "NovaTech-FAQ.txt", desc: "15 Q&As — pricing, features, integrations" },
+              { name: "NovaTech-Returns-Policy.txt", desc: "Refunds, cancellations, downgrades" },
+              { name: "NovaTech-Product-Guide.txt", desc: "Full product overview and pricing tiers" },
+            ].map((doc) => (
+              <div
+                key={doc.name}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  background: "var(--color-bg-surface2)",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "16px" }}>📄</span>
+                  <div>
+                    <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--color-text-primary)" }}>
+                      {doc.name}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
+                      {doc.desc}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={`/sample-docs/${doc.name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--color-border)",
+                    background: "transparent",
+                    color: "var(--color-accent)",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    textDecoration: "none",
+                    transition: "border-color 0.15s, background 0.15s",
+                    flexShrink: 0,
+                  }}
+                >
+                  View
+                </a>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

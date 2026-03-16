@@ -30,13 +30,23 @@ function genId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+const REMAINING_KEY = "sd_remaining";
+const MAX_MESSAGES = 10;
+
 function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return genId();
   const stored = localStorage.getItem("sd_session_id");
   if (stored) return stored;
   const id = genId();
   localStorage.setItem("sd_session_id", id);
+  localStorage.setItem(REMAINING_KEY, String(MAX_MESSAGES));
   return id;
+}
+
+function getStoredRemaining(): number {
+  if (typeof window === "undefined") return MAX_MESSAGES;
+  const stored = localStorage.getItem(REMAINING_KEY);
+  return stored !== null ? parseInt(stored, 10) : MAX_MESSAGES;
 }
 
 // ─── Types ────────────────────────────────────────────────
@@ -55,6 +65,8 @@ export default function ChatWidget() {
   const [config, setConfig] = useState<BotConfig | null>(null);
   const [sessionId] = useState(getOrCreateSessionId);
   const [hasOpened, setHasOpened] = useState(false);
+  const [remaining, setRemaining] = useState(() => getStoredRemaining());
+  const [rateLimited, setRateLimited] = useState(() => getStoredRemaining() <= 0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -127,8 +139,30 @@ export default function ChatWidget() {
 
       const data = await res.json();
 
+      if (res.status === 429) {
+        setRateLimited(true);
+        setRemaining(0);
+        localStorage.setItem(REMAINING_KEY, "0");
+        const limitMsg: Message = {
+          id: genId(),
+          role: "assistant",
+          content: data.error || "You've used all free messages in this demo.",
+          confidence: 0,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, limitMsg]);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(data.error || "Something went wrong");
+      }
+
+      // Update remaining count
+      if (typeof data.remaining === "number") {
+        setRemaining(data.remaining);
+        localStorage.setItem(REMAINING_KEY, String(data.remaining));
+        if (data.remaining <= 0) setRateLimited(true);
       }
 
       const assistantMsg: Message = {
@@ -242,6 +276,9 @@ export default function ChatWidget() {
                   <span style={{ fontSize: "11px", color: "var(--color-text-secondary)" }}>
                     Online
                   </span>
+                  <span style={{ fontSize: "10px", color: "var(--color-text-muted)", marginLeft: "4px" }}>
+                    · {remaining > 0 ? `${remaining} left` : "limit reached"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -329,8 +366,8 @@ export default function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything…"
-              disabled={isLoading}
+              placeholder={rateLimited ? "Demo limit reached" : "Ask anything…"}
+              disabled={isLoading || rateLimited}
               style={{
                 flex: 1,
                 background: "var(--color-bg-surface2)",
@@ -351,7 +388,7 @@ export default function ChatWidget() {
             />
             <button
               onClick={sendMessage}
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isLoading || rateLimited}
               aria-label="Send message"
               style={{
                 width: "38px",

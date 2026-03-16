@@ -1,0 +1,74 @@
+NovaTech — Product Guide
+========================
+
+Overview
+--------
+NovaTech is a unified workspace for teams that need project management, communication, and document collaboration in one place. Built for teams of 5 to 500, NovaTech replaces the need for separate tools like Trello, Slack, and Google Drive.
+
+Core Features
+-------------
+
+1. Task Boards
+Create Kanban boards with customizable columns. Drag and drop tasks between stages. Each task supports:
+- Assignees (multiple people per task)
+- Due dates and priority levels (Low, Medium, High, Critical)
+- Subtasks and checklists
+- File attachments (up to 100MB per file)
+- Comments and @mentions
+- Time tracking
+
+2. Team Messaging
+Real-time messaging built into the platform. Features include:
+- Direct messages between team members
+- Group channels (public or private)
+- Thread replies for organized discussions
+- File sharing in any conversation
+- Emoji reactions
+- Message search across all conversations
+
+3. Document Hub
+A centralized place for all team documents:
+- Create rich-text documents directly in NovaTech
+- Upload files of any type (PDF, Word, Excel, images, videos)
+- Version history with the ability to restore previous versions
+- Folder organization with drag-and-drop
+- Share documents with external guests via secure links
+
+4. Analytics Dashboard
+Track team performance and project health:
+- Task completion rates by team member and project
+- Time tracking reports with exportable CSV
+- Burndown charts for sprint-based workflows
+- Workload distribution view (who has too much, who has capacity)
+- Custom date range filtering
+
+5. Automations (Professional and Enterprise)
+Create custom automation rules:
+- "When a task moves to Done → notify the project owner"
+- "When a due date is missed → change priority to Critical"
+- "When a new member joins → assign onboarding checklist"
+- Up to 50 automation rules on Professional, unlimited on Enterprise
+
+Pricing
+-------
+- Starter: $12/user/month — ideal for small teams getting organized
+- Professional: $29/user/month — for growing teams that need automations and analytics
+- Enterprise: $59/user/month — for large organizations requiring SSO, compliance, and dedicated support
+
+All prices are per user, billed monthly. Annual billing saves 20%.
+
+System Requirements
+-------------------
+- Web: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- Mobile: iOS 15+ or Android 12+
+- Desktop: macOS 11+ or Windows 10+ (Electron app available)
+
+Getting Started
+---------------
+1. Sign up at app.novatech.io
+2. Create your first workspace
+3. Invite your team via email
+4. Create a project board
+5. Start adding tasks
+
+Need help? Email support@novatech.io or open the chat widget on our website.

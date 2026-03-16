@@ -19,6 +19,22 @@ export default function KnowledgePage() {
         </p>
       </div>
 
+      <div style={{
+        padding: "12px 16px",
+        borderRadius: "10px",
+        background: "rgba(47, 129, 247, 0.08)",
+        border: "1px solid rgba(47, 129, 247, 0.2)",
+        fontSize: "13px",
+        color: "var(--color-accent)",
+        marginBottom: "20px",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+      }}>
+        <span>📌</span>
+        <span>Demo Mode — Sample NovaTech documents are pre-loaded. In production, upload your own documents here.</span>
+      </div>
+
       <ErrorBoundary label="File upload area failed to load.">
         <AdminFileUpload onUploadSuccess={() => setRefreshTick((t) => t + 1)} />
       </ErrorBoundary>

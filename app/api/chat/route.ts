@@ -6,6 +6,8 @@ import { chat } from "@/lib/claude";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const MAX_MESSAGES = 10;
+
 interface BotConfig {
   id: string;
   bot_name: string;
@@ -60,7 +62,56 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServerSupabaseClient();
 
-    // 1. Fetch bot config
+    // ── Rate limiting ───────────────────────────────────────────────────────
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
+    // Upsert session row
+    const { data: session } = await supabase
+      .from("sd_sessions")
+      .upsert(
+        { session_id: session_id.trim(), ip_address: clientIp },
+        { onConflict: "session_id" }
+      )
+      .select()
+      .single();
+
+    const currentCount = session?.usage_count ?? 0;
+
+    if (currentCount >= MAX_MESSAGES) {
+      return NextResponse.json(
+        {
+          error: `You've used all ${MAX_MESSAGES} free messages. This is a portfolio demo — reach out for unlimited access!`,
+          code: "RATE_LIMIT",
+          remaining: 0,
+        },
+        { status: 429 }
+      );
+    }
+
+    // Secondary IP check
+    const { data: ipSessions } = await supabase
+      .from("sd_sessions")
+      .select("usage_count")
+      .eq("ip_address", clientIp);
+
+    const totalIpUsage =
+      ipSessions?.reduce((sum, s) => sum + (s.usage_count ?? 0), 0) ?? 0;
+
+    if (totalIpUsage >= MAX_MESSAGES) {
+      return NextResponse.json(
+        {
+          error: `You've used all ${MAX_MESSAGES} free messages. This is a portfolio demo — reach out for unlimited access!`,
+          code: "RATE_LIMIT",
+          remaining: 0,
+        },
+        { status: 429 }
+      );
+    }
+
+    // ── 1. Fetch bot config ─────────────────────────────────────────────────
     const { data: configData, error: configError } = await supabase
       .from("bot_config")
       .select("*")
@@ -72,24 +123,24 @@ export async function POST(req: NextRequest) {
     }
     const config = configData as BotConfig;
 
-    // 2. Embed the user message
+    // ── 2. Embed the user message ───────────────────────────────────────────
     const queryEmbedding = await embedText(message);
 
-    // 3. Retrieve top 4 relevant chunks
+    // ── 3. Retrieve top 4 relevant chunks ───────────────────────────────────
     const chunks = await retrieveChunks(queryEmbedding, 4);
 
-    // 4. Build system prompt and call Claude
+    // ── 4. Build system prompt and call Claude ──────────────────────────────
     const systemPrompt = buildSystemPrompt(config, chunks);
 
     const responseText = await chat(systemPrompt, [
       { role: "user", content: message },
     ]);
 
-    // 5. Determine confidence score
+    // ── 5. Determine confidence score ───────────────────────────────────────
     const wasEscalated = responseText.includes("I don't have that information yet");
     const confidence = wasEscalated ? 0.3 : chunks.length > 0 ? 1.0 : 0.3;
 
-    // 6. Store exchange in conversations table
+    // ── 6. Store exchange in conversations table ────────────────────────────
     const chunkIds = chunks.map((c) => c.id);
 
     const { error: insertError } = await supabase.from("conversations").insert([
@@ -113,10 +164,18 @@ export async function POST(req: NextRequest) {
       // Non-fatal — still return the response
     }
 
+    // ── 7. Increment usage count ────────────────────────────────────────────
+    const newRemaining = MAX_MESSAGES - currentCount - 1;
+    await supabase
+      .from("sd_sessions")
+      .update({ usage_count: currentCount + 1 })
+      .eq("session_id", session_id.trim());
+
     return NextResponse.json({
       response: responseText,
       confidence,
       chunks_used: chunks.length,
+      remaining: newRemaining,
     });
   } catch (error) {
     return NextResponse.json(
