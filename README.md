@@ -2,7 +2,7 @@
 
 > **AI-powered chat widget with RAG pipeline, admin dashboard, and knowledge gap detection. Built as a Fiverr portfolio project by Abrar Tajwar Khan.**
 
-🔗 **Live Demo:** [smartdesk-fiyjfdklw-abrartajwar2-6162s-projects.vercel.app](https://smartdesk-fiyjfdklw-abrartajwar2-6162s-projects.vercel.app)  
+🔗 **Live Demo:** [smartdesk-ai-one.vercel.app](https://smartdesk-ai-one.vercel.app/)  
 🐙 **Repo:** [github.com/WarRinOP/smartdesk-ai](https://github.com/WarRinOP/smartdesk-ai)
 
 ---
