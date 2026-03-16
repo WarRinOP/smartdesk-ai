@@ -81,7 +81,7 @@ export default function StatsCards() {
     fetch("/api/stats")
       .then((r) => r.json())
       .then((data) => setStats(data))
-      .catch(console.error)
+      .catch(() => { /* non-fatal */ })
       .finally(() => setLoading(false));
   }, []);
 

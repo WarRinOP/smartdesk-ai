@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate embeddings in batches of 128 (Voyage AI limit)
+    // Generate embeddings in batches of 128
     const BATCH_SIZE = 128;
     const allEmbeddings: number[][] = [];
 
@@ -78,7 +78,6 @@ export async function POST(req: NextRequest) {
       message: `Successfully processed ${chunkCount} chunks from "${file.name}"`,
     });
   } catch (error) {
-    console.error("[upload] Error:", error);
     return NextResponse.json(
       {
         error: "Upload failed",

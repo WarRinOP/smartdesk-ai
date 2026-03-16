@@ -105,7 +105,6 @@ export async function GET(req: NextRequest) {
       total_pages: Math.ceil(total / PAGE_SIZE),
     });
   } catch (error) {
-    console.error("[conversations] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch conversations", details: String(error) },
       { status: 500 }

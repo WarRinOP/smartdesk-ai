@@ -65,7 +65,7 @@ export default function ConfigForm() {
           escalation_message: data.escalation_message,
         });
       })
-      .catch(console.error);
+      .catch(() => { /* config fetch failed — defaults applied */ });
   }, []);
 
   const showToast = (message: string, type: "success" | "error") => {

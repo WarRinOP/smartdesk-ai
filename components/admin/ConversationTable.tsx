@@ -55,7 +55,7 @@ export default function ConversationTable() {
       setSessions(data.sessions ?? []);
       setTotal(data.total ?? 0);
       setTotalPages(data.total_pages ?? 1);
-    } catch (e) { console.error(e); }
+    } catch { /* non-fatal */ }
     finally { setLoading(false); }
   }, [page, filter]);
 
@@ -69,7 +69,7 @@ export default function ConversationTable() {
       const res = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`);
       const data = await res.json();
       setThread(data.messages ?? []);
-    } catch (e) { console.error(e); }
+    } catch { /* non-fatal */ }
     finally { setThreadLoading(false); }
   };
 

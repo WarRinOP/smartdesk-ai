@@ -15,26 +15,15 @@ export async function GET() {
   try {
     const supabase = createServerSupabaseClient();
 
-    // 1. Fetch all low-confidence user messages (confidence < 0.5)
-    const { error } = await supabase
-      .from("conversations")
-      .select("session_id, content, created_at")
-      .eq("role", "user")
-      .lt("confidence", 0.5)
-      .order("created_at", { ascending: false })
-      .limit(200);
-
-    // Actually, confidence is stored on assistant messages, not user messages.
-    // We need to join: get session_ids of low-confidence assistant msgs, 
-    // then fetch the corresponding user messages in those sessions.
-    const { data: lowConfidenceAssistant } = await supabase
+    // Fetch session IDs where assistant had low confidence
+    const { data: lowConfidenceAssistant, error } = await supabase
       .from("conversations")
       .select("session_id")
       .eq("role", "assistant")
       .lt("confidence", 0.5)
       .limit(200);
 
-    if (error && !lowConfidenceAssistant) {
+    if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -110,9 +99,8 @@ ${questions.map((q, i) => `${i}: "${q}"`).join("\n")}`;
             .filter(Boolean),
         }));
       }
-    } catch (clusterError) {
+    } catch {
       // Fallback: return raw questions without clustering
-      console.error("[gaps] Clustering failed:", clusterError);
       gaps = [
         {
           cluster_label: "Unanswered questions",
@@ -127,7 +115,6 @@ ${questions.map((q, i) => `${i}: "${q}"`).join("\n")}`;
       total_low_confidence: lowSessionIds.length,
     });
   } catch (error) {
-    console.error("[gaps] Error:", error);
     return NextResponse.json(
       { error: "Failed to generate gap report", details: String(error) },
       { status: 500 }

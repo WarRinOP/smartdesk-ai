@@ -110,7 +110,6 @@ export async function POST(req: NextRequest) {
     ]);
 
     if (insertError) {
-      console.error("[chat] Failed to store conversation:", insertError.message);
       // Non-fatal — still return the response
     }
 
@@ -120,7 +119,6 @@ export async function POST(req: NextRequest) {
       chunks_used: chunks.length,
     });
   } catch (error) {
-    console.error("[chat] Error:", error);
     return NextResponse.json(
       {
         error: "Chat failed",

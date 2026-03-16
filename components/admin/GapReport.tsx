@@ -49,7 +49,7 @@ export default function GapReport() {
       const res = await fetch("/api/gaps");
       const json = await res.json();
       setData(json);
-    } catch (e) { console.error(e); }
+    } catch { /* non-fatal */ }
     finally { setLoading(false); }
   }, []);
 

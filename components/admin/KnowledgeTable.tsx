@@ -28,7 +28,7 @@ export default function KnowledgeTable({ onRefresh }: { onRefresh?: number }) {
       const res = await fetch("/api/chunks");
       const data = await res.json();
       setFiles(data.files ?? []);
-    } catch (e) { console.error(e); }
+    } catch { /* non-fatal */ }
     finally { setLoading(false); }
   }, []);
 
@@ -41,7 +41,7 @@ export default function KnowledgeTable({ onRefresh }: { onRefresh?: number }) {
       await fetch(`/api/chunks?source_file=${encodeURIComponent(sourceFile)}`, { method: "DELETE" });
       setFiles((prev) => prev.filter((f) => f.source_file !== sourceFile));
       if (previewFile === sourceFile) setPreviewFile(null);
-    } catch (e) { console.error(e); }
+    } catch { /* non-fatal */ }
     finally { setDeletingFile(null); }
   };
 
@@ -57,7 +57,7 @@ export default function KnowledgeTable({ onRefresh }: { onRefresh?: number }) {
       });
       const data = await res.json();
       setPreviewChunks(data.chunks ?? []);
-    } catch (e) { console.error(e); }
+    } catch { /* non-fatal */ }
     finally { setPreviewLoading(false); }
   };
 
