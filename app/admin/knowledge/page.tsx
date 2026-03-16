@@ -20,19 +20,27 @@ export default function KnowledgePage() {
       </div>
 
       <div style={{
-        padding: "12px 16px",
+        padding: "14px 16px",
         borderRadius: "10px",
         background: "rgba(47, 129, 247, 0.08)",
         border: "1px solid rgba(47, 129, 247, 0.2)",
         fontSize: "13px",
-        color: "var(--color-accent)",
+        color: "var(--color-text-secondary)",
         marginBottom: "20px",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
+        lineHeight: 1.6,
       }}>
-        <span>📌</span>
-        <span>Demo Mode — Sample NovaTech documents are pre-loaded. In production, upload your own documents here.</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+          <span>📌</span>
+          <span style={{ fontWeight: 600, color: "var(--color-accent)" }}>Demo Mode</span>
+        </div>
+        <p style={{ margin: "0 0 4px", paddingLeft: "26px" }}>
+          This system is currently trained on <strong style={{ color: "var(--color-text-primary)" }}>NovaTech</strong> sample data
+          — including their FAQ, returns policy, and product documentation.
+        </p>
+        <p style={{ margin: 0, paddingLeft: "26px", fontSize: "12px", color: "var(--color-text-muted)" }}>
+          Want a custom deployment trained on your own data? Reach out to{" "}
+          <strong style={{ color: "var(--color-text-secondary)" }}>Abrar Tajwar Khan</strong> to build one for your business.
+        </p>
       </div>
 
       <ErrorBoundary label="File upload area failed to load.">

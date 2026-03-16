@@ -8,6 +8,14 @@ export const maxDuration = 60;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: NextRequest) {
+  // Block uploads in demo mode
+  if (process.env.DEMO_MODE === "true") {
+    return NextResponse.json(
+      { error: "Uploads are disabled in demo mode. Sample documents are pre-loaded." },
+      { status: 403 }
+    );
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
