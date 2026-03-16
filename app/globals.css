@@ -294,3 +294,22 @@ body {
   border-color: var(--color-border-hover) !important;
   color: var(--color-text-primary) !important;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━
+   Responsive Nav Helpers
+   ━━━━━━━━━━━━━━━━━━━━━━ */
+.sd-nav-desktop {
+  display: flex !important;
+}
+.sd-nav-mobile {
+  display: none !important;
+}
+@media (max-width: 639px) {
+  .sd-nav-desktop {
+    display: none !important;
+  }
+  .sd-nav-mobile {
+    display: flex !important;
+  }
+}
+
