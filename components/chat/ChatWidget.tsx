@@ -82,7 +82,7 @@ export default function ChatWidget() {
   const [adminCode, setAdminCode] = useState("");
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
-  const [simBlock, setSimBlock] = useState(false);
+  const [exhaustedTest, setExhaustedTest] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -157,6 +157,26 @@ export default function ChatWidget() {
     }
   };
 
+  const exhaustSession = async (action: 'exhaust' | 'reset' = 'exhaust') => {
+    const res = await fetch('/api/admin/exhaust-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+      body: JSON.stringify({ session_id: sessionId, action }),
+    });
+    if (res.ok) {
+      if (action === 'exhaust') {
+        setExhaustedTest(true);
+        setRemaining(0);
+        localStorage.setItem(REMAINING_KEY, '0');
+      } else {
+        setExhaustedTest(false);
+        setRemaining(999);
+        setRateLimited(false);
+        localStorage.setItem(REMAINING_KEY, '999');
+      }
+    }
+  };
+
   const sendMessage = useCallback(async () => {
     const text = input.trim();
     if (!text || isLoading) return;
@@ -175,8 +195,8 @@ export default function ChatWidget() {
     try {
       const adminKey = getAdminKey();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (adminKey) headers["x-admin-key"] = adminKey;
-      if (simBlock) headers["x-simulate-block"] = "true";
+      // Check Block mode: omit admin key so real rate limit fires
+      if (adminKey && !exhaustedTest) headers["x-admin-key"] = adminKey;
       const res = await fetch("/api/chat", {
         method: "POST",
         headers,
@@ -519,17 +539,24 @@ export default function ChatWidget() {
         {admin ? (
           <>
             <button
-              onClick={() => { localStorage.removeItem(ADMIN_KEY); setAdmin(false); setSimBlock(false); setRemaining(getStoredRemaining()); setRateLimited(getStoredRemaining() <= 0); }}
+              onClick={() => { localStorage.removeItem(ADMIN_KEY); setAdmin(false); setExhaustedTest(false); setRemaining(getStoredRemaining()); setRateLimited(getStoredRemaining() <= 0); }}
               style={{ background: "none", border: "none", color: "#22c55e", fontSize: "9px", cursor: "pointer", padding: "2px 4px" }}
             >
               ✓ Admin
             </button>
             <span style={{ color: "#2d3548", fontSize: "9px" }}>|</span>
             <button
-              onClick={() => setSimBlock(s => !s)}
-              style={{ background: "none", border: "none", fontSize: "9px", cursor: "pointer", color: simBlock ? "#fbbf24" : "#4b5675", padding: "2px 4px" }}
+              onClick={() => exhaustedTest ? exhaustSession('reset') : undefined}
+              style={{ background: "none", border: "none", fontSize: "9px", cursor: exhaustedTest ? "pointer" : "default", color: exhaustedTest ? "#4b5675" : "#22c55e", fontWeight: exhaustedTest ? 400 : 700, padding: "2px 4px" }}
             >
-              {simBlock ? '⚠ Block ON' : '🔒 Sim Block'}
+              🔓
+            </button>
+            <span style={{ color: "#2d3548", fontSize: "9px" }}>/</span>
+            <button
+              onClick={() => !exhaustedTest ? exhaustSession('exhaust') : undefined}
+              style={{ background: "none", border: "none", fontSize: "9px", cursor: !exhaustedTest ? "pointer" : "default", color: !exhaustedTest ? "#4b5675" : "#f59e0b", fontWeight: !exhaustedTest ? 400 : 700, padding: "2px 4px" }}
+            >
+              🔒
             </button>
           </>
         ) : (
