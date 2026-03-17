@@ -31,6 +31,7 @@ function genId() {
 }
 
 const REMAINING_KEY = "sd_remaining";
+const ADMIN_KEY = "sd_admin_key";
 const MAX_MESSAGES = 10;
 
 function getOrCreateSessionId(): string {
@@ -49,6 +50,15 @@ function getStoredRemaining(): number {
   return stored !== null ? parseInt(stored, 10) : MAX_MESSAGES;
 }
 
+function getAdminKey(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(ADMIN_KEY) || "";
+}
+
+function isAdminMode(): boolean {
+  return getAdminKey().length > 0;
+}
+
 // ─── Types ────────────────────────────────────────────────
 interface BotConfig {
   bot_name: string;
@@ -65,8 +75,13 @@ export default function ChatWidget() {
   const [config, setConfig] = useState<BotConfig | null>(null);
   const [sessionId] = useState(getOrCreateSessionId);
   const [hasOpened, setHasOpened] = useState(false);
-  const [remaining, setRemaining] = useState(() => getStoredRemaining());
-  const [rateLimited, setRateLimited] = useState(() => getStoredRemaining() <= 0);
+  const [remaining, setRemaining] = useState(() => isAdminMode() ? 999 : getStoredRemaining());
+  const [rateLimited, setRateLimited] = useState(() => !isAdminMode() && getStoredRemaining() <= 0);
+  const [admin, setAdmin] = useState(() => isAdminMode());
+  const [showAdminInput, setShowAdminInput] = useState(false);
+  const [adminCode, setAdminCode] = useState("");
+  const [adminError, setAdminError] = useState("");
+  const [adminLoading, setAdminLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -115,6 +130,32 @@ export default function ChatWidget() {
     }
   }, [isOpen]);
 
+  const verifyAdmin = async () => {
+    setAdminLoading(true);
+    try {
+      const res = await fetch("/api/admin-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: adminCode }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        localStorage.setItem(ADMIN_KEY, adminCode);
+        setAdmin(true);
+        setRemaining(999);
+        setRateLimited(false);
+        setShowAdminInput(false);
+        setAdminCode("");
+      } else {
+        setAdminError("Invalid code");
+      }
+    } catch {
+      setAdminError("Verification failed");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
   const sendMessage = useCallback(async () => {
     const text = input.trim();
     if (!text || isLoading) return;
@@ -131,9 +172,12 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
+      const adminKey = getAdminKey();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (adminKey) headers["x-admin-key"] = adminKey;
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ message: text, session_id: sessionId }),
       });
 
@@ -467,6 +511,60 @@ export default function ChatWidget() {
       >
         {isOpen ? <CloseIcon /> : <ChatIcon />}
       </button>
+
+      {/* Admin tiny button */}
+      <div style={{ position: "fixed", bottom: "82px", right: "22px", zIndex: 1002 }}>
+        {admin ? (
+          <button
+            onClick={() => { localStorage.removeItem(ADMIN_KEY); setAdmin(false); setRemaining(getStoredRemaining()); setRateLimited(getStoredRemaining() <= 0); }}
+            style={{ background: "none", border: "none", color: "#22c55e", fontSize: "9px", cursor: "pointer", padding: "2px 4px" }}
+          >
+            ✓ Admin
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowAdminInput(true)}
+            style={{ background: "none", border: "none", color: "#1a1f2e", fontSize: "9px", cursor: "pointer", padding: "2px 4px" }}
+          >
+            Admin
+          </button>
+        )}
+      </div>
+
+      {/* Admin modal */}
+      {showAdminInput && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 1100, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+          onClick={() => { setShowAdminInput(false); setAdminError(""); setAdminCode(""); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#0f1117", border: "1px solid #1a1f2e", borderRadius: "14px", padding: "24px", maxWidth: "380px", width: "100%" }}
+          >
+            <p style={{ fontSize: "14px", fontWeight: 600, color: "#e2e8f0", marginBottom: "6px" }}>Are you the developer?</p>
+            <p style={{ fontSize: "12px", color: "#475569", marginBottom: "16px" }}>Enter the secret code you set for unlimited testing.</p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <input
+                type="password"
+                value={adminCode}
+                onChange={(e) => { setAdminCode(e.target.value); setAdminError(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter") verifyAdmin(); }}
+                placeholder="Secret code"
+                autoFocus
+                style={{ flex: 1, padding: "10px 14px", background: "#1a1f2e", border: "1px solid #252d3d", borderRadius: "8px", color: "#e2e8f0", fontSize: "13px" }}
+              />
+              <button
+                onClick={verifyAdmin}
+                disabled={!adminCode.trim() || adminLoading}
+                style={{ padding: "10px 18px", background: "#818cf8", border: "none", borderRadius: "8px", color: "#0f1117", fontWeight: 600, cursor: "pointer", fontSize: "13px", opacity: (!adminCode.trim() || adminLoading) ? 0.5 : 1 }}
+              >
+                {adminLoading ? "..." : "Verify"}
+              </button>
+            </div>
+            {adminError && <p style={{ fontSize: "12px", color: "#ef4444", marginTop: "8px" }}>{adminError}</p>}
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ||
       "unknown";
 
+    // Admin bypass
+    const adminKey = req.headers.get("x-admin-key") || "";
+    const isAdmin = adminKey && adminKey === process.env.ADMIN_SECRET;
+
     // Upsert session row
     const { data: session } = await supabase
       .from("sd_sessions")
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     const currentCount = session?.usage_count ?? 0;
 
-    if (currentCount >= MAX_MESSAGES) {
+    if (!isAdmin && currentCount >= MAX_MESSAGES) {
       return NextResponse.json(
         {
           error: `You've used all ${MAX_MESSAGES} free messages. This is a portfolio demo — reach out for unlimited access!`,
@@ -100,7 +104,7 @@ export async function POST(req: NextRequest) {
     const totalIpUsage =
       ipSessions?.reduce((sum, s) => sum + (s.usage_count ?? 0), 0) ?? 0;
 
-    if (totalIpUsage >= MAX_MESSAGES) {
+    if (!isAdmin && totalIpUsage >= MAX_MESSAGES) {
       return NextResponse.json(
         {
           error: `You've used all ${MAX_MESSAGES} free messages. This is a portfolio demo — reach out for unlimited access!`,
@@ -175,7 +179,7 @@ export async function POST(req: NextRequest) {
       response: responseText,
       confidence,
       chunks_used: chunks.length,
-      remaining: newRemaining,
+      remaining: isAdmin ? 999 : newRemaining,
     });
   } catch (error) {
     return NextResponse.json(
