@@ -82,6 +82,7 @@ export default function ChatWidget() {
   const [adminCode, setAdminCode] = useState("");
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
+  const [simBlock, setSimBlock] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -175,6 +176,7 @@ export default function ChatWidget() {
       const adminKey = getAdminKey();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (adminKey) headers["x-admin-key"] = adminKey;
+      if (simBlock) headers["x-simulate-block"] = "true";
       const res = await fetch("/api/chat", {
         method: "POST",
         headers,
@@ -515,12 +517,21 @@ export default function ChatWidget() {
       {/* Admin tiny button */}
       <div style={{ position: "fixed", bottom: "82px", right: "22px", zIndex: 1002 }}>
         {admin ? (
-          <button
-            onClick={() => { localStorage.removeItem(ADMIN_KEY); setAdmin(false); setRemaining(getStoredRemaining()); setRateLimited(getStoredRemaining() <= 0); }}
-            style={{ background: "none", border: "none", color: "#22c55e", fontSize: "9px", cursor: "pointer", padding: "2px 4px" }}
-          >
-            ✓ Admin
-          </button>
+          <>
+            <button
+              onClick={() => { localStorage.removeItem(ADMIN_KEY); setAdmin(false); setSimBlock(false); setRemaining(getStoredRemaining()); setRateLimited(getStoredRemaining() <= 0); }}
+              style={{ background: "none", border: "none", color: "#22c55e", fontSize: "9px", cursor: "pointer", padding: "2px 4px" }}
+            >
+              ✓ Admin
+            </button>
+            <span style={{ color: "#2d3548", fontSize: "9px" }}>|</span>
+            <button
+              onClick={() => setSimBlock(s => !s)}
+              style={{ background: "none", border: "none", fontSize: "9px", cursor: "pointer", color: simBlock ? "#fbbf24" : "#4b5675", padding: "2px 4px" }}
+            >
+              {simBlock ? '⚠ Block ON' : '🔒 Sim Block'}
+            </button>
+          </>
         ) : (
           <button
             onClick={() => setShowAdminInput(true)}
