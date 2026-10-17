@@ -9,7 +9,10 @@ export default function SeedButton() {
     if (status === "loading") return;
     setStatus("loading");
     try {
-      const res = await fetch("/api/seed", { method: "POST" });
+      const res = await fetch("/api/seed", {
+        method: "POST",
+        headers: { "x-admin-key": localStorage.getItem("sd_admin_key") || "" },
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Seed failed");
       setStatus("done");

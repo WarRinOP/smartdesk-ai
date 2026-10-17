@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/usage-guard";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { SEED_DOCS } from "@/lib/seed";
 import { chunkText, embedBatch, storeChunks } from "@/lib/rag";
@@ -6,9 +7,13 @@ import { chunkText, embedBatch, storeChunks } from "@/lib/rag";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const supabase = createServerSupabaseClient();
+
+    // Seeding wipes the knowledge base and pays for embeddings: admin only.
+    const denied = await requireAdmin(req, supabase, { prefix: "sd", limit: 10, noun: "messages" });
+    if (denied) return denied
 
     // 1. Clear ALL existing knowledge chunks (full reset for demo)
     await supabase

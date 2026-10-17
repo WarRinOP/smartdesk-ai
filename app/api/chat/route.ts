@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { embedText, retrieveChunks, RetrievedChunk } from "@/lib/rag";
 import { chat } from "@/lib/claude";
+import { reserveQuota, GuardConfig } from "@/lib/usage-guard";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_MESSAGES = 10;
+const MAX_MESSAGE_CHARS = 1000;
+const GUARD: GuardConfig = { prefix: "sd", limit: MAX_MESSAGES, noun: "messages" };
 
 interface BotConfig {
   id: string;
@@ -62,71 +65,18 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServerSupabaseClient();
 
-    // ── Rate limiting ───────────────────────────────────────────────────────
-    const clientIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
-
-    // Admin bypass
-    const adminKey = req.headers.get("x-admin-key") || "";
-    const isAdmin = adminKey && adminKey === process.env.ADMIN_SECRET;
-
-    // Simulate block mode — must check BEFORE admin bypass
-    if (req.headers.get("x-simulate-block") === "true" && adminKey === process.env.ADMIN_SECRET) {
+    if (message.length > MAX_MESSAGE_CHARS) {
       return NextResponse.json(
-        {
-          error: `You've used all ${MAX_MESSAGES} free messages. This is a portfolio demo — reach out for unlimited access!`,
-          code: "RATE_LIMIT",
-          remaining: 0,
-        },
-        { status: 429 }
+        { error: `Message is too long (max ${MAX_MESSAGE_CHARS} characters)` },
+        { status: 400 }
       );
     }
 
-    // Upsert session row
-    const { data: session } = await supabase
-      .from("sd_sessions")
-      .upsert(
-        { session_id: session_id.trim(), ip_address: clientIp },
-        { onConflict: "session_id" }
-      )
-      .select()
-      .single();
+    // ── Usage limit: atomic, per device and per network address ─────────────
+    const reservation = await reserveQuota(req, supabase, GUARD);
+    if (!reservation.ok) return reservation.response;
 
-    const currentCount = session?.usage_count ?? 0;
-
-    if (!isAdmin && currentCount >= MAX_MESSAGES) {
-      return NextResponse.json(
-        {
-          error: `You've used all ${MAX_MESSAGES} free messages. This is a portfolio demo — reach out for unlimited access!`,
-          code: "RATE_LIMIT",
-          remaining: 0,
-        },
-        { status: 429 }
-      );
-    }
-
-    // Secondary IP check
-    const { data: ipSessions } = await supabase
-      .from("sd_sessions")
-      .select("usage_count")
-      .eq("ip_address", clientIp);
-
-    const totalIpUsage =
-      ipSessions?.reduce((sum, s) => sum + (s.usage_count ?? 0), 0) ?? 0;
-
-    if (!isAdmin && totalIpUsage >= MAX_MESSAGES) {
-      return NextResponse.json(
-        {
-          error: `You've used all ${MAX_MESSAGES} free messages. This is a portfolio demo — reach out for unlimited access!`,
-          code: "RATE_LIMIT",
-          remaining: 0,
-        },
-        { status: 429 }
-      );
-    }
-
+    try {
     // ── 1. Fetch bot config ─────────────────────────────────────────────────
     const { data: configData, error: configError } = await supabase
       .from("bot_config")
@@ -135,7 +85,10 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (configError || !configData) {
-      return NextResponse.json({ error: "Bot config not found" }, { status: 500 });
+      await reservation.refund();
+      return reservation.respond(
+        NextResponse.json({ error: "Bot config not found" }, { status: 500 })
+      );
     }
     const config = configData as BotConfig;
 
@@ -180,19 +133,19 @@ export async function POST(req: NextRequest) {
       // Non-fatal — still return the response
     }
 
-    // ── 7. Increment usage count ────────────────────────────────────────────
-    const newRemaining = MAX_MESSAGES - currentCount - 1;
-    await supabase
-      .from("sd_sessions")
-      .update({ usage_count: currentCount + 1 })
-      .eq("session_id", session_id.trim());
-
-    return NextResponse.json({
-      response: responseText,
-      confidence,
-      chunks_used: chunks.length,
-      remaining: isAdmin ? 999 : newRemaining,
-    });
+    return reservation.respond(
+      NextResponse.json({
+        response: responseText,
+        confidence,
+        chunks_used: chunks.length,
+        remaining: reservation.remaining,
+      })
+    );
+    } catch (paidCallError) {
+      // The paid call failed before producing an answer: give the use back.
+      await reservation.refund();
+      throw paidCallError;
+    }
   } catch (error) {
     return NextResponse.json(
       {

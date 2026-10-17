@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { chat } from "@/lib/claude";
+import { reserveQuota, GuardConfig } from "@/lib/usage-guard";
+
+// Clustering calls Claude, so it has its own small per-device budget.
+const GUARD: GuardConfig = { prefix: "sd", limit: 3, noun: "gap reports", scope: "gaps" };
+const MAX_QUESTIONS = 100;
+const MAX_QUESTION_CHARS = 300;
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -56,7 +62,10 @@ export async function GET(req: NextRequest) {
       .in("session_id", lowSessionIds)
       .order("created_at", { ascending: false });
 
-    const questions = (userMessages ?? []).map((m) => m.content).filter(Boolean);
+    const questions = (userMessages ?? [])
+      .map((m) => String(m.content ?? "").slice(0, MAX_QUESTION_CHARS))
+      .filter(Boolean)
+      .slice(0, MAX_QUESTIONS);
 
     if (questions.length === 0) {
       return NextResponse.json({ gaps: [], total_low_confidence: 0 });
@@ -87,7 +96,11 @@ ${questions.map((q, i) => `${i}: "${q}"`).join("\n")}`;
 
     let gaps: GapQuestion[] = [];
 
+    // Only call Claude when the visitor still has budget; otherwise return the raw list.
+    const reservation = await reserveQuota(req, supabase, GUARD);
+
     try {
+      if (!reservation.ok) throw new Error("no budget");
       const clusterResponse = await chat(clusterPrompt, [
         { role: "user", content: "Cluster these questions and return only the JSON." },
       ]);
@@ -110,6 +123,7 @@ ${questions.map((q, i) => `${i}: "${q}"`).join("\n")}`;
       }
     } catch {
       // Fallback: return raw questions without clustering
+      if (reservation.ok) await reservation.refund();
       gaps = [
         {
           cluster_label: "Unanswered questions",
